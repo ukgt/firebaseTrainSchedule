@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>TrainSchedule</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel = "stylesheet" href = "assets\style.css">
+</head>
+  <body>
+     <div class="jumbotron text-white bg-dark text-center">
+          <h1 class="display-4">ALL ABOARD!</h1>
+          <p class="lead">Current Time: </p>
+
+     </div>
+     <h2>Train Schedule  </h2>
+     <table class="table" id = "myTrains">
+          <thead>
+               <tr>
+                    <th scope="col">Train Name</th>
+                    <th scope="col">Destination</th>
+                    <th scope="col">Frequency (min)</th>
+                    <th scope="col" id = nextArrival>Next Arrival</th>
+                    <th scope="col">Minutes Away</th>
+                  
+               </tr>
+               <!-- <div id="tableWrite"></div> -->
+               
+          </thead>
+          <tbody id="trainsAdded"></tbody>
+     </table>
+     <h3>Add Train</h2>
+     <form>
+          <div class="form-group">
+               <label for="exampleInputEmail1">Train Name</label>
+               <input type="text" class="form-control" id="trainName-input" aria-describedby="emailHelp" placeholder="California Zephir">
+          </div>
+          <div class="form-group">
+               <label for="exampleInputPassword1">Destination</label>
+               <input type="text" class="form-control" id="destination-input" placeholder="Las Angeles">
+          </div>
+
+          <div class="form-group">
+               <label for="exampleInputEmail1">First Train Time (24hr)</label>
+               <input type="text" class="form-control" id="startTime-input" aria-describedby="emailHelp"
+                    placeholder="13:23">
+
+          </div>
+          <div class="form-group">
+               <label for="exampleInputEmail1">Frequency (min)</label>
+               <input type="text" class="form-control" id="frequency-input" aria-describedby="emailHelp"
+                    placeholder="1440">
+          </div>
+          <button type="submit" id="submitButton" class="btn btn-primary">Submit</button>
+     </form>
+
+
+
+
+
+
+
+
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.7.2/firebase.js"></script>
+    <script src=" https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.23.0/moment.min.js"></script>
+    <!-- <script src = "assets\logic.js"></script> -->
+    <script>
+    $(document).ready(function(){
+     let currentTime = $('p').append(moment().local().format('kk:mm:ss'));
+    
+   
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyCH9xd1ks7nGCKeDF1QTbuKXdpnPrP67sg",
+    authDomain: "trainschedule-37875.firebaseapp.com",
+    databaseURL: "https://trainschedule-37875.firebaseio.com",
+    projectId: "trainschedule-37875",
+    storageBucket: "",
+    messagingSenderId: "602763467098"
+  };
+  firebase.initializeApp(config);
+
+  
+  var dataRef = firebase.database();
+  
+  // Initial Values
+  var trainName = "";
+  var destination = "";
+  var startTime = 0;
+  var frequency = "";
+  var minAway = "";
+  var nextArrival = "";
+  // Capture Button Click
+  $("#submitButton").on("click", function (event) {
+       event.preventDefault();
+       
+       
+       // logic for storing and retrieving the most train information
+       // Don't forget to provide initial data to your Firebase database.
+       trainName = $("#trainName-input").val().trim();
+       destination = $("#destination-input").val().trim();
+       startTime = $("#startTime-input").val().trim();
+       frequency = $("#frequency-input").val().trim();
+       nextArrival = $('#nextArrival').val().trim();
+     //   let minAway = moment().diff(moment(startTime), "minutes")
+     //   let minAway = frequency + minAway;
+     //   let nextArrival = frequency + currentTime;
+     //   console.log(nextArrival);
+      
+       $('form').get(0).reset()
+       
+       // Code for the push
+       dataRef.ref().push({
+            
+            trainName: trainName,
+            destination: destination,
+            startTime: startTime,
+            frequency: frequency,
+            nextArrival: nextArrival,
+            minAway: minAway,
+            dateAdded: firebase.database.ServerValue.TIMESTAMP
+          });
+          
+     });
+     dataRef.ref().on("child_added", function (addRow) {
+          let trainName = addRow.val().trainName;
+          let destination = addRow.val().destination;
+          let frequency = addRow.val().frequency;
+          let nextArrival = addRow.val().nextArrival;
+          let minAway = addRow.val().minAway;
+          
+          $("#myTrains > tbody").append( 
+               "<tr><td>" + trainName + "</td><td>" + destination + "</td><td>" + frequency  +
+                    "</td><td>" + nextArrival + "</td><td>" + minAway + "</td><td>" +
+                         "</td></tr>"
+                         
+                         );
+                         
+                        
+                         
+                         
+                    });
+               }); 
+                    </script>
+</body>
+</html>
