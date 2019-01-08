@@ -57,15 +57,6 @@
           <button type="submit" id="submitButton" class="btn btn-primary">Submit</button>
      </form>
 
-
-
-
-
-
-
-
-
-
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
@@ -75,9 +66,17 @@
     <script src=" https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.23.0/moment.min.js"></script>
     <!-- <script src = "assets\logic.js"></script> -->
     <script>
+     let currentTime = moment()
     $(document).ready(function(){
-     let currentTime = $('p').append(moment().local().format('kk:mm:ss'));
+      $('p').text(currentTime.local().format('kk:mm:ss'));
     
+    let realTime = setInterval(function(){
+     currentTime = moment();
+     $('p').text(currentTime.local().format('kk:mm:ss'));
+         
+    } , 1000)
+
+//     clearInterval(realTime);
    
   // Initialize Firebase
   var config = {
@@ -94,29 +93,24 @@
   var dataRef = firebase.database();
   
   // Initial Values
-  var trainName = "";
-  var destination = "";
-  var startTime = 0;
-  var frequency = "";
-  var minAway = "";
-  var nextArrival = "";
   // Capture Button Click
   $("#submitButton").on("click", function (event) {
        event.preventDefault();
        
-       
+  var trainName = "";
+  var destination = "";
+  var startTime = 0;
+  var frequency = "";
+         
        // logic for storing and retrieving the most train information
        // Don't forget to provide initial data to your Firebase database.
        trainName = $("#trainName-input").val().trim();
        destination = $("#destination-input").val().trim();
-       startTime = $("#startTime-input").val().trim();
+       startTime = moment($("#startTime-input").val().trim(), 'hh:mm').valueOf();
        frequency = $("#frequency-input").val().trim();
-       nextArrival = $('#nextArrival').val().trim();
-     //   let minAway = moment().diff(moment(startTime), "minutes")
-     //   let minAway = frequency + minAway;
-     //   let nextArrival = frequency + currentTime;
-     //   console.log(nextArrival);
       
+
+           
        $('form').get(0).reset()
        
        // Code for the push
@@ -126,22 +120,27 @@
             destination: destination,
             startTime: startTime,
             frequency: frequency,
-            nextArrival: nextArrival,
-            minAway: minAway,
-            dateAdded: firebase.database.ServerValue.TIMESTAMP
+          //   nextArrival: nextArrival,
+          //   minAway: minAway,
+          //   dateAdded: firebase.database.ServerValue.TIMESTAMP
           });
           
      });
      dataRef.ref().on("child_added", function (addRow) {
           let trainName = addRow.val().trainName;
           let destination = addRow.val().destination;
-          let frequency = addRow.val().frequency;
-          let nextArrival = addRow.val().nextArrival;
-          let minAway = addRow.val().minAway;
-          
+          let frequency = Number(addRow.val().frequency);
+          let nextArrival = addRow.val().startTime;
+                    
+           while (nextArrival < currentTime.valueOf() ){ 
+                nextArrival = (frequency *60 *1000) + nextArrival; 
+           }
+
+           let minAway = Math.round((nextArrival - currentTime.valueOf()) / 60000) ;
+
           $("#myTrains > tbody").append( 
                "<tr><td>" + trainName + "</td><td>" + destination + "</td><td>" + frequency  +
-                    "</td><td>" + nextArrival + "</td><td>" + minAway + "</td><td>" +
+                    "</td><td>" + moment.utc(nextArrival).local().format('kk:mm') + "</td><td>" + minAway + "</td><td>" +
                          "</td></tr>"
                          
                          );
